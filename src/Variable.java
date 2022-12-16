@@ -4,6 +4,11 @@ public class Variable {
     private String name;
     private ArrayList outcomes;
 
+    public Variable(Variable other) {
+    this.name = other.name;
+    this.outcomes = new ArrayList<>(other.getOutcomes());
+    }
+
     public Variable(String name , ArrayList outcomes){
         this.name = name;
         this.outcomes = outcomes;

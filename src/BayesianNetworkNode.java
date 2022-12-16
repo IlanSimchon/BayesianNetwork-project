@@ -12,20 +12,18 @@ public class BayesianNetworkNode {
         this.variable = variable;
         this.parents = new ArrayList<>();;
         this.cpt = new CPT(this.variable, this.parents, table);
-
     }
 
-
-    public Variable getVariable() {
-        return this.variable;
+    public BayesianNetworkNode(BayesianNetworkNode other){
+        this.variable = new Variable(other.getVariable());
+        this.cpt = new CPT(other.getCpt());
+        this.parents = new ArrayList<>(other.getParents());
     }
 
     public void setParents(BayesianNetworkNode node){
         this.parents.add(node);
     }
-    public CPT getCpt() {
-        return cpt;
-    }
+
     public void setCpt(Variable variable, ArrayList<BayesianNetworkNode> parents, String table){
         this.cpt = new CPT(variable , parents , table);
     }
@@ -37,7 +35,7 @@ public class BayesianNetworkNode {
     public Object[] Simple_deduction(HashMap<String , String> queries , ArrayList<BayesianNetworkNode> all_bs_net , String name) {
         int index_of_querie = Integer.MAX_VALUE;
         BayesianNetworkNode Node_of_querie = null;
-        int count_sum = -1 , count_multi = 0;
+        int count_sum = 0 , count_multi = 0;
         for (int i = 0; i < all_bs_net.size(); i++) {
             if(all_bs_net.get(i).variable.getName().equals(name))   {
                 index_of_querie = i;
@@ -90,8 +88,9 @@ public class BayesianNetworkNode {
         double sum_of_mechane = 0.0;
         for (int i = 0; i < all_combination.size(); i++) {
             Object ret_mone[] =  P(all_combination.get(i).get(0), all_combination.get(i).get(1));
+            if(sum_of_mone != 0) count_sum++;
             sum_of_mone += (double)ret_mone[0];
-            if(i != 0) count_sum++;
+
             count_sum += (int)ret_mone[1];
             count_multi += (int)ret_mone[2];
             for (int j = 0; j < all_bs_net.get(index_of_querie).variable.getOutcomes().size(); j++) {
@@ -99,8 +98,9 @@ public class BayesianNetworkNode {
                     all_combination.get(i).get(1).remove(all_combination.get(i).get(0).indexOf(Node_of_querie));
                     all_combination.get(i).get(1).add(all_combination.get(i).get(0).indexOf(Node_of_querie), all_bs_net.get(index_of_querie).variable.getOutcomes().get(j));
                     Object[] ret_mechane = P(all_combination.get(i).get(0), all_combination.get(i).get(1));
+                    if(sum_of_mechane != 0) count_sum++;
                     sum_of_mechane += (double)ret_mechane[0];
-                    if(j != 0) count_sum++;
+
                     count_sum += (int)ret_mechane[1];
                     count_multi += (int)ret_mechane[2];
 
@@ -126,7 +126,8 @@ public class BayesianNetworkNode {
                     same_row[names.get(i).cpt.getName_of_parents().indexOf(names.get(j).getVariable().getName())] = data.get(j);
                 }
             }
-            double temp = get_precent(names.get(i).cpt , same_row);
+
+            double temp = names.get(i).get_precent(same_row);
             sum *= temp;
             if (i != 0) count_multi++;
         }
@@ -136,16 +137,18 @@ public class BayesianNetworkNode {
 
 
     // מקבל את השורה שאנו מחפשים ומחזיר את הערך שלהשורה התואמת לה בדיוק בטבלה
-    public Double get_precent(CPT cpt , String[] same_row){
-        for (int i = 0; i < cpt.getP().size(); i++) {
+    public Double get_precent(String[] same_row){
+        for (int i = 0; i < this.cpt.getP().size(); i++) {
             boolean same = true;
-            for (int j = 0; j < cpt.getName_of_parents().size()+1 && same; j++) {
-                if (! cpt.getGiven().get(j).get(i).equals(same_row[j])) {
+            for (int j = 0; j < this.cpt.getName_of_parents().size() && same; j++) {
+//                System.out.println(j);
+//                System.out.println(i);
+                if (! this.cpt.getGiven().get(j).get(i).equals(same_row[j])) {
                     same = false;
                 }
             }
             if (same == true) {
-                return cpt.getP().get(i);
+                return this.cpt.getP().get(i);
 
             }
         }
@@ -153,7 +156,13 @@ public class BayesianNetworkNode {
     }
 
 
+    public CPT getCpt() {
+        return cpt;
+    }
 
+    public Variable getVariable() {
+        return this.variable;
+    }
 
     @Override
     public String toString() {
