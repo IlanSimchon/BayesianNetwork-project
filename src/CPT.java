@@ -13,13 +13,16 @@ public class CPT implements Comparable<CPT> {
         this.P = new ArrayList();
         this.variable = variable;
         this.name_of_parents = new ArrayList<>();
+        // We will save all the parents of the variable
         for (int i = 0; i < parents.size(); i++) {
             this.name_of_parents.add(parents.get(i).getVariable().getName());
         }
         this.name_of_parents.add(this.variable.getName());
         int num_of_parents = name_of_parents.size();
+
         String[] s = table.split(" ");
         int num_of_row = s.length;
+        // We will put all the possible combinations in the table
         int set_count = num_of_row;
         this.given = new ArrayList<>();
         for (int i = 0; i < num_of_parents; i++) {
@@ -38,14 +41,17 @@ public class CPT implements Comparable<CPT> {
                 }
             }
         }
+        // We will put the probabilities in the table
         for (int i = 0; i < s.length; i++) {
             this.P.add(Double.parseDouble(s[i]));
         }
-        for (int i = 0; i < num_of_row; i += this.variable.getOutcomes().size()) {
+        // We will add the values of the variable of the given cpt to the table
+        for (int i = 0; i < num_of_row ; i += this.variable.getOutcomes().size()) {
             for (int j = 0; j < this.variable.getOutcomes().size(); j++) {
                 this.given.get(given.size() - 1).add((String) this.variable.getOutcomes().get(j));
             }
         }
+        // define the size of the factor
         this.size = num_of_row * num_of_parents;
     }
 
@@ -68,27 +74,32 @@ public class CPT implements Comparable<CPT> {
         this.name_of_parents = new ArrayList<>(other.getName_of_parents());
         this.size = other.size;
     }
-    public void set_to_other(CPT other){
-        this.variable = other.variable;
-        this.given = other.getGiven();
-        this.P = other.getP();
-        this.name_of_parents = other.getName_of_parents();
-        this.size = other.size;
-    }
 
 
+    /**
+     * this function delete row by index
+     * @param index the index to remove
+     */
     public void delete_row(int index) {
         for (int i = 0; i < this.given.size(); i++) {
             this.given.get(i).remove(index);
         }
         this.P.remove(index);
     }
-
+    /**
+     * this function delete column  by index
+     * @param index the index to remove
+     */
     public void delete_col(int index) {
         this.given.remove(index);
         this.name_of_parents.remove(index);
     }
 
+
+    /**
+     * this function delete column by index
+     * @param key the name op variable to remove his column
+     */
     public void delete_col(String key) {
         for (int i = 0; i < this.name_of_parents.size(); i++) {
             if (this.name_of_parents.get(i).equals(key)) {
@@ -98,6 +109,12 @@ public class CPT implements Comparable<CPT> {
         }
     }
 
+
+    /**
+     * This function goes through all the rows containing a particular value in a specific column and deletes those rows
+     * @param name the variable name of the column
+     * @param value the value to remove his rows
+     */
     public void del_rows(String name, String value) {
             int index = this.name_of_parents.indexOf(name);
         for (int i = 0; i < this.given.get(index).size(); i++) {
@@ -126,6 +143,9 @@ public class CPT implements Comparable<CPT> {
         return variable;
     }
 
+    /**
+     * this function prints the cpt
+     */
     public void ShowCpt() {
         System.out.println("_____CPT_____ ");
         for (int i = 0; i < this.name_of_parents.size(); i++) {
@@ -141,6 +161,12 @@ public class CPT implements Comparable<CPT> {
         }
     }
 
+
+    /**
+     * This function implements the comparable interface and defines the comparison between 2 cpt as a comparison between their sizes
+     * @param o the object to be compared.
+     * @return a negative integer, zero, or a positive integer as this object is less than, equal to, or greater than the specified object.
+     */
     @Override
     public int compareTo(CPT o) {
         if (this.size - o.size != 0) {

@@ -15,16 +15,6 @@ public class Variable {
 
     }
 
-
-
-    @Override
-    public String toString() {
-        return "Variable{" +
-                "name='" + name + '\'' +
-                ", outcomes=" + outcomes +
-                '}';
-    }
-
     public String getName() {
         return name;
     }
@@ -33,6 +23,15 @@ public class Variable {
         return outcomes;
 
 
+    }
+
+
+    @Override
+    public String toString() {
+        return "Variable{" +
+                "name='" + name + '\'' +
+                ", outcomes=" + outcomes +
+                '}';
     }
 
 }

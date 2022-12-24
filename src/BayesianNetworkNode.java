@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class BayesianNetworkNode {
@@ -20,19 +19,15 @@ public class BayesianNetworkNode {
         this.parents = new ArrayList<>(other.getParents());
     }
 
-    public void setParents(BayesianNetworkNode node){
-        this.parents.add(node);
-    }
 
-    public void setCpt(Variable variable, ArrayList<BayesianNetworkNode> parents, String table){
-        this.cpt = new CPT(variable , parents , table);
-    }
-
-    public ArrayList<BayesianNetworkNode> getParents() {
-        return parents;
-    }
-    // כלום לא ברור כאן עדיין, צריך לראות כיצד ניתן להרכיב את כל הקומבינציות האפשריות בצורה קלה ולשלוח אותם לP ולסכום את כל התוצאות
-    public Object[] Simple_deduction(HashMap<String , String> queries , ArrayList<BayesianNetworkNode> all_bs_net , String name) {
+    /**
+     * This function receives a query and returns the probability corresponding to that query by simple inference
+     * @param queries  contain the query
+     * @param all_bs_net the bayesiaentworkNode
+     * @param name  the name of the query variable
+     * @return The probability obtained plus the number of addition and multiplication operations done during the algorithm
+     */
+    public Object[] Simple_conclusion(HashMap<String , String> queries , ArrayList<BayesianNetworkNode> all_bs_net , String name) {
         int index_of_querie = Integer.MAX_VALUE;
         BayesianNetworkNode Node_of_querie = null;
         int count_sum = 0 , count_multi = 0;
@@ -44,18 +39,20 @@ public class BayesianNetworkNode {
         }
         HashMap<BayesianNetworkNode, ArrayList> Unknown = new HashMap<>();
         int num_of_option = 1;
+        // Calculates the number of possible combinations
         for (int i = 0; i < all_bs_net.size(); i++) {
             if (!queries.containsKey(all_bs_net.get(i).variable.getName())) {
-                Unknown.put(all_bs_net.get(i), all_bs_net.get(i).variable.getOutcomes()); // בודק כמה אופציות לקומבינציות יש
+                Unknown.put(all_bs_net.get(i), all_bs_net.get(i).variable.getOutcomes());
                 num_of_option *= all_bs_net.get(i).variable.getOutcomes().size();
             }
         }
         ArrayList<ArrayList<ArrayList>> all_combination = new ArrayList<>();
-        for (int i = 0; i < num_of_option; i++) {    // מכניס את כל הערכים הנתונים
+        // Inserts the already given values into all the lists of the combinations
+        for (int i = 0; i < num_of_option; i++) {
             ArrayList<BayesianNetworkNode> names = new ArrayList<>();
             ArrayList<String> data = new ArrayList<>();
             for (int j = 0; j < queries.size(); j++) {
-                for (int k = 0; k < all_bs_net.size(); k++) { // ממיר את זה לנוד דרך מציאתו ברשת
+                for (int k = 0; k < all_bs_net.size(); k++) {
                     if (queries.keySet().toArray()[j].equals(all_bs_net.get(k).getVariable().getName())) {
                         names.add(all_bs_net.get(k));
                         data.add(String.valueOf(queries.get(queries.keySet().toArray()[j])));
@@ -68,8 +65,9 @@ public class BayesianNetworkNode {
             all_combination.add(combination);
 
         }
+        // Finishes filling all the lists with combinations by inserting values of the non-given variables
         int set_count = all_combination.size();
-        for (int i = 0; i < Unknown.size(); i++) { // צריך להכניס את כל הקומבינציות האפשריות של המשתנים הלא נתונים
+        for (int i = 0; i < Unknown.size(); i++) {
             set_count = set_count / Unknown.get(Unknown.keySet().toArray()[i]).size();
             int index = 0;
             int count = 0;
@@ -84,50 +82,64 @@ public class BayesianNetworkNode {
                 }
             }
         }
+        // Loops through each combination and calculates the probability for this data
         double sum_of_mone = 0.0;
         double sum_of_mechane = 0.0;
         for (int i = 0; i < all_combination.size(); i++) {
-            Object ret_mone[] =  P(all_combination.get(i).get(0), all_combination.get(i).get(1));
-            if(sum_of_mone != 0) count_sum++;
-            sum_of_mone += (double)ret_mone[0];
+            Object ret_mone[] = P(all_combination.get(i).get(0), all_combination.get(i).get(1));
+            if (sum_of_mone != 0) count_sum++;
+            sum_of_mone += (double) ret_mone[0];
 
-            count_sum += (int)ret_mone[1];
-            count_multi += (int)ret_mone[2];
+            count_sum += (int) ret_mone[1];
+            count_multi += (int) ret_mone[2];
+
+            // Adds the combinations with the additional values of the query variable for the denominator
             for (int j = 0; j < all_bs_net.get(index_of_querie).variable.getOutcomes().size(); j++) {
-                if (! all_bs_net.get(index_of_querie).variable.getOutcomes().get(j).equals(queries.get(name))) {
+                if (!all_bs_net.get(index_of_querie).variable.getOutcomes().get(j).equals(queries.get(name))) {
                     all_combination.get(i).get(1).remove(all_combination.get(i).get(0).indexOf(Node_of_querie));
                     all_combination.get(i).get(1).add(all_combination.get(i).get(0).indexOf(Node_of_querie), all_bs_net.get(index_of_querie).variable.getOutcomes().get(j));
                     Object[] ret_mechane = P(all_combination.get(i).get(0), all_combination.get(i).get(1));
-                    if(sum_of_mechane != 0) count_sum++;
-                    sum_of_mechane += (double)ret_mechane[0];
+                    if (sum_of_mechane != 0) count_sum++;
+                    sum_of_mechane += (double) ret_mechane[0];
 
-                    count_sum += (int)ret_mechane[1];
-                    count_multi += (int)ret_mechane[2];
+                    count_sum += (int) ret_mechane[1];
+                    count_multi += (int) ret_mechane[2];
 
                 }
             }
         }
+        // Adds the numerator to the denominator
         sum_of_mechane += sum_of_mone;
         count_sum++;
+
+        // divides the numerator by the denominator
         Object[] ret = {sum_of_mone / sum_of_mechane , count_sum , count_multi};
 
         return ret;
 
     }
-    // מקבל רשימת נודים ורשימת ערכים תואמת (כל ערך מותאם לנוד) ומחזיר את כפולת ההסתברויות של כל נוד בהינתן הוריו
+
+    /**
+     * This function that calculates the probability for a list of a certain combination of values for variables
+     * @param names the variables name
+     * @param data the given cousbination
+     * @return A list containing the probability of this combination, the amount of addition operations and the amount of multiplication operations done in order to calculate
+     */
     public Object[] P(ArrayList<BayesianNetworkNode> names , ArrayList<String> data){
         int count_multi = 0;
         double sum = 1;
         for (int i = 0; i < names.size(); i++) {
-            String[] same_row = new String[names.get(i).cpt.getGiven().size()]; // מערך באורך הרשימה של ההורים + הערך עצמו
-            same_row[same_row.length-1] = data.get(i); // הכנסת הערך עצמו למיקום האחרון במערך בהתאם להגדרת הcpt
+            String[] same_row = new String[names.get(i).cpt.getGiven().size()];
+            // Inserting the value itself into the last cell according to the cpt definition
+            same_row[same_row.length-1] = data.get(i);
+            // Filling in a row of relevant values for the question variable according to the position of the variables in the table
             for (int j = 0; j < names.size(); j++) {
                 if(names.get(i).getParents().contains(names.get(j))) {
                     same_row[names.get(i).cpt.getName_of_parents().indexOf(names.get(j).getVariable().getName())] = data.get(j);
                 }
             }
-
-            double temp = names.get(i).get_precent(same_row);
+            // find the same row in the cpt
+            double temp = names.get(i).get_percent(same_row);
             sum *= temp;
             if (i != 0) count_multi++;
         }
@@ -135,14 +147,15 @@ public class BayesianNetworkNode {
         return ret;
     }
 
-
-    // מקבל את השורה שאנו מחפשים ומחזיר את הערך שלהשורה התואמת לה בדיוק בטבלה
-    public Double get_precent(String[] same_row){
+    /**
+     * Gets a row of values and looks for the probability found in this row in the table
+     * @param same_row the row of values
+     * @return The row probability corresponding to the given row
+     */
+    public Double get_percent(String[] same_row){
         for (int i = 0; i < this.cpt.getP().size(); i++) {
             boolean same = true;
             for (int j = 0; j < this.cpt.getName_of_parents().size() && same; j++) {
-//                System.out.println(j);
-//                System.out.println(i);
                 if (! this.cpt.getGiven().get(j).get(i).equals(same_row[j])) {
                     same = false;
                 }
@@ -164,19 +177,23 @@ public class BayesianNetworkNode {
         return this.variable;
     }
 
+    public void setParents(BayesianNetworkNode node){
+        this.parents.add(node);
+    }
+
+    public void setCpt(Variable variable, ArrayList<BayesianNetworkNode> parents, String table){
+        this.cpt = new CPT(variable , parents , table);
+    }
+
+    public ArrayList<BayesianNetworkNode> getParents() {
+        return parents;
+    }
     @Override
     public String toString() {
         return "BayesianNetworkNode{" +
                 "variable=" + variable +
                 ", parents=" + parents.size() +
                 '}';
-    }
-
-
-
-
-    public ArrayList indexHM(HashMap<String , ArrayList> h , int index){
-        return h.get(h.keySet().toArray()[index]);
     }
 
 }
